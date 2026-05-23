@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QA·AI — Test Case Generator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --text: #1e1b4b;
+    --muted: #6b7280;
+    --border: #e0e7ff;
+    --accent: #4f46e5;
+    --accent2: #7c3aed;
+  }
+  [data-theme="dark"] {
+    --bg: #0f0f1a;
+    --card: #1a1a2e;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #2d2d4e;
+    --accent: #818cf8;
+    --accent2: #a78bfa;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* Animated gradient header */
+  .header-bg {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed, #6d28d9);
+    background-size: 200% 200%;
+    animation: gradientShift 6s ease infinite;
+  }
+  @keyframes gradientShift {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
+
+  /* Tab styles */
+  .tab { cursor:pointer; padding:10px 20px; border-radius:12px 12px 0 0; font-size:13px; font-weight:500; transition:all .2s; color:var(--muted); border:none; background:transparent; }
+  .tab.active { background:var(--card); color:var(--accent); box-shadow:0 -2px 8px rgba(79,70,229,0.15); }
+
+  /* Card */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; transition:background .3s, border .3s; }
+
+  /* Textarea */
+  .qa-input {
+    width:100%; border:1.5px solid var(--border); border-radius:12px;
+    padding:14px; font-size:13px; background:var(--bg); color:var(--text);
+    resize:vertical; outline:none; transition:border .2s, background .3s;
+    font-family:inherit;
+  }
+  .qa-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+
+  /* Button */
+  .btn-primary {
+    background:linear-gradient(135deg, #4f46e5, #7c3aed);
+    color:#fff; border:none; padding:11px 24px; border-radius:10px;
+    font-size:13px; font-weight:600; cursor:pointer;
+    transition:transform .15s, box-shadow .15s;
+    box-shadow:0 4px 14px rgba(79,70,229,0.3);
+  }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(79,70,229,0.4); }
+  .btn-primary:active { transform:translateY(0); }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  .btn-sm {
+    font-size:11px; padding:5px 12px; border-radius:7px;
+    border:1.5px solid var(--border); background:var(--bg); color:var(--muted);
+    cursor:pointer; transition:all .15s; font-weight:500;
+  }
+  .btn-sm:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* Badges */
+  .badge { font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.05em; }
+  .badge-unit        { background:#dbeafe; color:#1e40af; }
+  .badge-integration { background:#dcfce7; color:#166534; }
+  .badge-edge_case   { background:#fef3c7; color:#92400e; }
+  .badge-security    { background:#fee2e2; color:#991b1b; }
+  .badge-happy_path  { background:#d1fae5; color:#065f46; }
+  .badge-negative    { background:#fce7f3; color:#9d174d; }
+  [data-theme="dark"] .badge-unit        { background:#1e3a5f; color:#93c5fd; }
+  [data-theme="dark"] .badge-integration { background:#14532d; color:#86efac; }
+  [data-theme="dark"] .badge-edge_case   { background:#451a03; color:#fcd34d; }
+  [data-theme="dark"] .badge-security    { background:#450a0a; color:#fca5a5; }
+  [data-theme="dark"] .badge-happy_path  { background:#064e3b; color:#6ee7b7; }
+  [data-theme="dark"] .badge-negative    { background:#500724; color:#f9a8d4; }
+
+  .priority-dot-high   { background:#ef4444; }
+  .priority-dot-medium { background:#f59e0b; }
+  .priority-dot-low    { background:#22c55e; }
+
+  /* Test card animation */
+  .test-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:20px; transition:transform .2s, box-shadow .2s, background .3s;
+    animation: slideUp 0.3s ease forwards;
+    opacity:0;
+  }
+  .test-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .test-card:nth-child(1) { animation-delay:.05s }
+  .test-card:nth-child(2) { animation-delay:.1s }
+  .test-card:nth-child(3) { animation-delay:.15s }
+  .test-card:nth-child(4) { animation-delay:.2s }
+  .test-card:nth-child(5) { animation-delay:.25s }
+
+  /* Left accent bar */
+  .accent-bar-unit        { border-left:4px solid #3b82f6; }
+  .accent-bar-integration { border-left:4px solid #22c55e; }
+  .accent-bar-edge_case   { border-left:4px solid #f59e0b; }
+  .accent-bar-security    { border-left:4px solid #ef4444; }
+  .accent-bar-happy_path  { border-left:4px solid #10b981; }
+  .accent-bar-negative    { border-left:4px solid #ec4899; }
+
+  /* Stats */
+  .stat-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600;
+    background:var(--bg); border:1.5px solid var(--border);
+  }
+  .stat-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+  /* Spinner */
+  .spinner-ring {
+    width:36px; height:36px; border:3px solid var(--border);
+    border-top-color:var(--accent); border-radius:50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Filter chips */
+  .chip {
+    font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px;
+    border:1.5px solid var(--border); background:var(--bg); color:var(--muted);
+    cursor:pointer; transition:all .15s; text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .chip.active { border-color:var(--accent); color:var(--accent); background:rgba(79,70,229,0.08); }
+
+  /* Code block */
+  .code-block {
+    background:#0d1117; border-radius:14px; overflow:hidden;
+    border:1px solid #30363d;
+  }
+  .code-header {
+    background:#161b22; display:flex; align-items:center;
+    justify-content:space-between; padding:10px 16px;
+    border-bottom:1px solid #30363d;
+  }
+  .code-body { padding:20px; overflow-x:auto; max-height:500px; }
+  .code-body pre { color:#e6edf3; font-family:'Fira Code', monospace; font-size:12px; line-height:1.6; }
+
+  /* Progress bar */
+  .progress-bar {
+    height:3px; background:linear-gradient(90deg, #4f46e5, #7c3aed);
+    border-radius:2px; transition:width .3s;
+    animation: progressPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes progressPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+  /* Toast */
+  .toast {
+    position:fixed; bottom:24px; right:24px; z-index:1000;
+    background:#1e1b4b; color:#fff; padding:12px 20px;
+    border-radius:12px; font-size:13px; font-weight:500;
+    box-shadow:0 8px 24px rgba(0,0,0,0.3);
+    transform:translateY(80px); opacity:0;
+    transition:transform .3s, opacity .3s;
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  /* Divider */
+  .steps-list { list-style:none; counter-reset:steps; }
+  .steps-list li { counter-increment:steps; display:flex; align-items:flex-start; gap:10px; padding:6px 0; font-size:13px; color:var(--muted); }
+  .steps-list li::before {
+    content:counter(steps);
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff; font-size:10px; font-weight:700;
+    width:20px; height:20px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center;
+    flex-shrink:0; margin-top:1px;
+  }
+
+  select { background:var(--bg); color:var(--text); border:1.5px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px; outline:none; }
+  select:focus { border-color:var(--accent); }
+
+  .hidden { display:none!important; }
+  .empty-state { text-align:center; padding:48px 20px; color:var(--muted); }
+  .empty-state .icon { font-size:48px; margin-bottom:12px; }
+  .section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<!-- Animated Header -->
+<header class="header-bg text-white">
+  <div style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;gap:14px">
+    <div style="font-size:32px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3))">🧪</div>
+    <div style="flex:1">
+      <div style="font-size:22px;font-weight:800;letter-spacing:-0.3px">QA · AI</div>
+      <div style="font-size:12px;opacity:0.8;margin-top:1px">Test Case Generator · Ollama Gemma 2B · Fully Offline</div>
+    </div>
+    <!-- Health badge -->
+    <div id="health-badge" style="font-size:11px;font-weight:600;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,0.15);backdrop-filter:blur(4px)">
+      ⏳ Connecting...
+    </div>
+    <!-- Dark mode toggle -->
+    <button onclick="toggleTheme()" style="background:rgba(255,255,255,0.15);border:none;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:16px;color:#fff;transition:background .2s" title="Toggle dark mode">
+      🌙
+    </button>
+  </div>
+  <!-- Progress bar (shown during loading) -->
+  <div id="progress-track" style="height:3px;background:rgba(255,255,255,0.1)" class="hidden">
+    <div class="progress-bar" style="width:70%"></div>
+  </div>
+</header>
+
+<div style="max-width:960px;margin:0 auto;padding:24px">
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:-1px;position:relative;z-index:1">
+    <button class="tab active" onclick="switchTab('req')" id="tab-btn-req">📋 Requirements</button>
+    <button class="tab" onclick="switchTab('api')" id="tab-btn-api">🔌 API Spec</button>
+    <button class="tab" onclick="switchTab('code')" id="tab-btn-code">💻 Code Gen</button>
+  </div>
+  <div style="border-top:2px solid var(--border);margin-bottom:20px"></div>
+
+  <!-- ===== TAB: Requirements ===== -->
+  <div id="tab-req">
+    <div class="card" style="margin-bottom:16px">
+      <p class="section-label">Product / Feature Requirements</p>
+      <textarea class="qa-input" id="req-text" rows="7"
+        placeholder="Describe what your feature does. Be specific — the more detail, the better the tests.
+
+Example: Users can register with email and password. Password must be 8+ characters with one uppercase letter. Email must be unique. A welcome email is sent after signup. Unverified users cannot log in."></textarea>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Test type</label>
+          <select id="req-type">
+            <option value="all">All types (recommended)</option>
+            <option value="unit">Unit tests only</option>
+            <option value="integration">Integration only</option>
+            <option value="edge">Edge cases only</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="margin-left:auto" onclick="generateRequirements()" id="req-btn">
+          Generate Test Cases →
+        </button>
+      </div>
+    </div>
+    <!-- Worst case hint -->
+    <div style="background:rgba(79,70,229,0.06);border:1.5px dashed rgba(79,70,229,0.25);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="fillWorstCase('req')">
+      <span style="font-size:20px">⚡</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent)">Try worst-case input</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Click to paste a minimal one-liner — tests that AI handles poor input</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: API Spec ===== -->
+  <div id="tab-api" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <p class="section-label">API Endpoint Specification</p>
+      <textarea class="qa-input" id="api-text" rows="10" style="font-family:monospace"
+        placeholder="Paste your API spec, endpoint description, or Swagger snippet.
+
+Example:
+POST /api/auth/login
+Body: { email: string, password: string }
+Returns 200 + JWT token on success
+Returns 401 if credentials wrong
+Returns 422 if fields missing"></textarea>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button class="btn-primary" onclick="generateAPI()" id="api-btn">Analyze API →</button>
+      </div>
+    </div>
+    <div style="background:rgba(79,70,229,0.06);border:1.5px dashed rgba(79,70,229,0.25);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="fillWorstCase('api')">
+      <span style="font-size:20px">⚡</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent)">Try worst-case input</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Click to paste a vague one-line API spec</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: Code Gen ===== -->
+  <div id="tab-code" class="hidden">
+    <div class="card" style="margin-bottom:16px">
+      <p class="section-label">Describe what to test</p>
+      <textarea class="qa-input" id="code-text" rows="7"
+        placeholder="Describe the function or feature you want test code for.
+
+Example: A login function that takes email and password, checks against a database, and returns a JWT token. It should throw an error if credentials are invalid."></textarea>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--muted);margin-right:8px">Language</label>
+          <select id="code-lang">
+            <option value="python">Python (pytest)</option>
+            <option value="javascript">JavaScript (Jest)</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="margin-left:auto" onclick="generateCode()" id="code-btn">Generate Code →</button>
+      </div>
+    </div>
+    <div style="background:rgba(79,70,229,0.06);border:1.5px dashed rgba(79,70,229,0.25);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="fillWorstCase('code')">
+      <span style="font-size:20px">⚡</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--accent)">Try worst-case input</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Click to paste a 2-word description</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Spinner ===== -->
+  <div id="spinner" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:48px">
+    <div class="spinner-ring"></div>
+    <div style="text-align:center">
+      <div style="font-weight:600;font-size:14px;color:var(--text)" id="spinner-msg">Gemma 2B is thinking...</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">Llama 3.2 · Running locally · No data leaves your machine</div>
+    </div>
+  </div>
+
+  <!-- ===== Results ===== -->
+  <div id="results" class="hidden" style="margin-top:24px">
+
+    <!-- Stats bar -->
+    <div id="stats-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+    <!-- Filter chips + actions -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      <div id="filter-chips" style="display:flex;gap:6px;flex-wrap:wrap;flex:1"></div>
+      <button class="btn-sm" onclick="copyAll()">📋 Copy JSON</button>
+      <button class="btn-sm" onclick="downloadJSON()">⬇️ Download</button>
+      <button class="btn-sm" onclick="downloadMarkdown()">📝 Export MD</button>
+    </div>
+
+    <!-- Cards grid -->
+    <div id="cards-grid" style="display:grid;gap:14px"></div>
+
+    <!-- Code output (for code tab) -->
+    <div id="code-output" class="hidden">
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:10px;height:10px;border-radius:50%;background:#ff5f56"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#ffbd2e"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#27c93f"></div>
+            <span id="code-filename" style="font-size:11px;color:#8b949e;margin-left:4px">test_generated.py</span>
+          </div>
+          <button onclick="copyCode()" style="font-size:11px;color:#8b949e;background:none;border:1px solid #30363d;padding:3px 10px;border-radius:6px;cursor:pointer;transition:color .15s" onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#8b949e'">Copy</button>
+        </div>
+        <div class="code-body">
+          <pre id="code-content"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw output fallback -->
+    <details style="margin-top:16px" id="raw-details">
+      <summary style="font-size:11px;color:var(--muted);cursor:pointer;user-select:none;font-weight:600">🔍 View raw model output</summary>
+      <pre id="raw-output" style="margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:11px;color:var(--muted);white-space:pre-wrap;max-height:300px;overflow-y:auto"></pre>
+    </details>
+  </div>
+
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "http://localhost:8000";
+let lastTests = [];
+let lastCode = "";
+let lastRaw = "";
+let activeFilter = "all";
+
+/* ---- Theme ---- */
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute("data-theme") === "dark";
+  html.setAttribute("data-theme", isDark ? "light" : "dark");
+  document.querySelector("button[onclick='toggleTheme()']").textContent = isDark ? "🌙" : "☀️";
+}
+
+/* ---- Worst case inputs ---- */
+const WORST = {
+  req:  "login system",
+  api:  "POST /login",
+  code: "user auth"
+};
+function fillWorstCase(tab) {
+  if (tab === "req")  document.getElementById("req-text").value = WORST.req;
+  if (tab === "api")  document.getElementById("api-text").value = WORST.api;
+  if (tab === "code") document.getElementById("code-text").value = WORST.code;
+  showToast("⚡ Worst-case input loaded! Hit Generate.");
+}
+
+/* ---- Health check ---- */
+async function checkHealth() {
+  const el = document.getElementById("health-badge");
+  try {
+    const r = await fetch(API + "/health", { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    if (d.ollama === "ok") {
+      el.textContent = "✅ Ready";
+      el.style.background = "rgba(34,197,94,0.25)";
+    } else {
+      el.textContent = "⚠️ No Ollama";
+      el.style.background = "rgba(245,158,11,0.25)";
+    }
+  } catch {
+    el.textContent = "❌ Backend offline";
+    el.style.background = "rgba(239,68,68,0.25)";
+  }
+}
+checkHealth();
+setInterval(checkHealth, 20000);
+
+/* ---- Tab switching ---- */
+function switchTab(name) {
+  ["req","api","code"].forEach(t => {
+    document.getElementById("tab-"+t).classList.toggle("hidden", t !== name);
+    document.getElementById("tab-btn-"+t).classList.toggle("active", t === name);
+  });
+  document.getElementById("results").classList.add("hidden");
+}
+
+/* ---- Spinner ---- */
+const MESSAGES = [
+  "Llama 3.2 is analyzing your input...",
+  "Identifying edge cases...",
+  "Building test scenarios...",
+  "Checking boundary conditions...",
+  "Writing expected outcomes...",
+  "Almost ready..."
+];
+let msgInterval;
+function showSpinner() {
+  document.getElementById("spinner").classList.remove("hidden");
+  document.getElementById("results").classList.add("hidden");
+  document.getElementById("progress-track").classList.remove("hidden");
+  let i = 0;
+  msgInterval = setInterval(() => {
+    document.getElementById("spinner-msg").textContent = MESSAGES[i++ % MESSAGES.length];
+  }, 3000);
+}
+function hideSpinner() {
+  document.getElementById("spinner").classList.add("hidden");
+  document.getElementById("progress-track").classList.add("hidden");
+  clearInterval(msgInterval);
+}
+
+/* ---- Toast ---- */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+/* ---- Render stats ---- */
+function renderStats(tests) {
+  const counts = {};
+  tests.forEach(t => { counts[t.type] = (counts[t.type]||0)+1; });
+  const colors = { unit:"#3b82f6", integration:"#22c55e", edge_case:"#f59e0b", security:"#ef4444", happy_path:"#10b981", negative:"#ec4899" };
+  let html = `<div class="stat-pill"><span class="stat-dot" style="background:var(--accent)"></span>${tests.length} Total</div>`;
+  Object.entries(counts).forEach(([type, n]) => {
+    html += `<div class="stat-pill"><span class="stat-dot" style="background:${colors[type]||'#6b7280'}"></span>${n} ${type.replace("_"," ")}</div>`;
+  });
+  document.getElementById("stats-bar").innerHTML = html;
+}
+
+/* ---- Render filter chips ---- */
+function renderFilters(tests) {
+  const types = [...new Set(tests.map(t => t.type))];
+  let html = `<button class="chip active" data-filter="all" onclick="filterCards('all')">All (${tests.length})</button>`;
+  types.forEach(type => {
+    const n = tests.filter(t => t.type === type).length;
+    html += `<button class="chip" data-filter="${type}" onclick="filterCards('${type}')">${type.replace("_"," ")} (${n})</button>`;
+  });
+  document.getElementById("filter-chips").innerHTML = html;
+}
+
+function filterCards(filter) {
+  activeFilter = filter;
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.filter === filter));
+  document.querySelectorAll(".test-card").forEach(c => {
+    c.style.display = (filter === "all" || c.dataset.type === filter) ? "" : "none";
+  });
+}
+
+/* ---- Render test cards ---- */
+function renderCards(tests) {
+  if (!tests.length) {
+    document.getElementById("cards-grid").innerHTML = `
+      <div class="empty-state">
+        <div class="icon">🤔</div>
+        <div style="font-weight:600;margin-bottom:6px">No structured tests parsed</div>
+        <div style="font-size:13px">Check the raw output below — the model responded but in an unexpected format.</div>
+      </div>`;
+    return;
+  }
+  document.getElementById("cards-grid").innerHTML = tests.map((t, i) => `
+    <div class="test-card accent-bar-${t.type||'unit'}" data-type="${t.type||'unit'}">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-weight:700;font-size:14px;color:var(--text)">#${i+1} ${escapeHTML(t.name||"Unnamed")}</span>
+            <span class="badge badge-${t.type||'unit'}">${(t.type||"unit").replace("_"," ")}</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--muted)">
+              <span class="priority-dot-${t.priority||'medium'}" style="width:7px;height:7px;border-radius:50%;display:inline-block"></span>
+              ${(t.priority||"medium").toUpperCase()}
+            </span>
+          </div>
+          <p style="font-size:13px;color:var(--muted);line-height:1.5">${escapeHTML(t.description||"")}</p>
+        </div>
+        <button onclick="copyCard(${i})" class="btn-sm" style="flex-shrink:0">📋</button>
+      </div>
+
+      ${t.steps?.length ? `
+      <div style="margin-bottom:12px">
+        <div class="section-label">Steps</div>
+        <ol class="steps-list">
+          ${t.steps.map(s=>`<li>${escapeHTML(s)}</li>`).join("")}
+        </ol>
+      </div>` : ""}
+
+      ${t.expected ? `
+      <div style="background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:10px 14px">
+        <div class="section-label" style="color:#16a34a;margin-bottom:4px">✓ Expected result</div>
+        <p style="font-size:13px;color:var(--text)">${escapeHTML(t.expected)}</p>
+      </div>` : ""}
+    </div>
+  `).join("");
+}
+
+/* ---- Show results panel ---- */
+function showResults(tests, raw, codeMode) {
+  lastTests = tests;
+  lastRaw = raw;
+  document.getElementById("results").classList.remove("hidden");
+  document.getElementById("code-output").classList.toggle("hidden", !codeMode);
+  document.getElementById("cards-grid").style.display = codeMode ? "none" : "";
+  document.getElementById("stats-bar").style.display = codeMode ? "none" : "";
+  document.getElementById("filter-chips").parentElement.style.display = codeMode ? "none" : "";
+  if (!codeMode) {
+    renderStats(tests);
+    renderFilters(tests);
+    renderCards(tests);
+  }
+  document.getElementById("raw-output").textContent = raw;
+}
+
+/* ---- Generate from requirements ---- */
+async function generateRequirements() {
+  const text = document.getElementById("req-text").value.trim();
+  if (!text) { showToast("⚠️ Please enter requirements first"); return; }
+  const btn = document.getElementById("req-btn");
+  btn.disabled = true; showSpinner();
+  try {
+    const r = await fetch(API+"/generate-tests", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ requirements: text, test_type: document.getElementById("req-type").value })
+    });
+    const d = await r.json();
+    hideSpinner(); btn.disabled = false;
+    showResults(d.tests||[], d.raw||"", false);
+    showToast(`✅ ${d.count||0} test cases generated!`);
+  } catch(e) {
+    hideSpinner(); btn.disabled = false;
+    showToast("❌ " + (e.message||"Connection error"));
+  }
+}
+
+/* ---- Generate from API spec ---- */
+async function generateAPI() {
+  const text = document.getElementById("api-text").value.trim();
+  if (!text) { showToast("⚠️ Please enter an API spec"); return; }
+  const btn = document.getElementById("api-btn");
+  btn.disabled = true; showSpinner();
+  try {
+    const r = await fetch(API+"/analyze-api", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ api_spec: text })
+    });
+    const d = await r.json();
+    hideSpinner(); btn.disabled = false;
+    showResults(d.tests||[], d.raw||"", false);
+    showToast(`✅ ${d.count||0} API tests generated!`);
+  } catch(e) {
+    hideSpinner(); btn.disabled = false;
+    showToast("❌ " + (e.message||"Connection error"));
+  }
+}
+
+/* ---- Generate code ---- */
+async function generateCode() {
+  const text = document.getElementById("code-text").value.trim();
+  if (!text) { showToast("⚠️ Please describe what to test"); return; }
+  const lang = document.getElementById("code-lang").value;
+  const btn = document.getElementById("code-btn");
+  btn.disabled = true; showSpinner();
+  try {
+    const r = await fetch(API+"/generate-code", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ requirements: text, language: lang })
+    });
+    const d = await r.json();
+    hideSpinner(); btn.disabled = false;
+    lastCode = d.code||"";
+    document.getElementById("code-content").textContent = d.code||"# No code generated";
+    document.getElementById("code-filename").textContent = lang === "python" ? "test_generated.py" : "generated.test.js";
+    showResults([], d.code||"", true);
+    showToast("✅ Code generated!");
+  } catch(e) {
+    hideSpinner(); btn.disabled = false;
+    showToast("❌ " + (e.message||"Connection error"));
+  }
+}
+
+/* ---- Copy / Download ---- */
+function copyAll() {
+  navigator.clipboard.writeText(JSON.stringify(lastTests, null, 2));
+  showToast("📋 JSON copied!");
+}
+function copyCode() {
+  navigator.clipboard.writeText(lastCode);
+  showToast("📋 Code copied!");
+}
+function copyCard(i) {
+  const t = lastTests[i];
+  const text = `Test: ${t.name}\nType: ${t.type}\n${t.description}\nSteps:\n${(t.steps||[]).map((s,i)=>`  ${i+1}. ${s}`).join("\n")}\nExpected: ${t.expected}`;
+  navigator.clipboard.writeText(text);
+  showToast("📋 Test case copied!");
+}
+function downloadJSON() {
+  const b = new Blob([JSON.stringify(lastTests, null, 2)], {type:"application/json"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+  a.download = "test-cases.json"; a.click();
+  showToast("⬇️ Downloaded test-cases.json");
+}
+function downloadMarkdown() {
+  let md = "# Generated Test Cases\n\n";
+  lastTests.forEach((t,i) => {
+    md += `## ${i+1}. ${t.name}\n**Type:** ${t.type} | **Priority:** ${t.priority}\n\n${t.description}\n\n`;
+    if (t.steps?.length) { md += `**Steps:**\n${t.steps.map((s,j)=>`${j+1}. ${s}`).join("\n")}\n\n`; }
+    if (t.expected) md += `**Expected:** ${t.expected}\n\n---\n\n`;
+  });
+  const b = new Blob([md], {type:"text/markdown"});
+  const a = document.createElement("a"); a.href = URL.createObjectURL(b);
+  a.download = "test-cases.md"; a.click();
+  showToast("📝 Downloaded test-cases.md");
+}
+
+function escapeHTML(s) {
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+</script>
+</body>
+</html>
