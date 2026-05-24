@@ -275,3 +275,4 @@ Write the code now:"""
     raw = call_ai(prompt)
     code = re.sub(r"```[a-z]*\n?", "", raw).replace("```", "").strip()
     return {"code": code}
+    
