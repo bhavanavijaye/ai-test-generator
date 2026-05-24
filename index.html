@@ -1,1 +1,208 @@
-hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TestCraft AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--border:rgba(120,120,220,0.15);--accent:#7c6af7;--accent2:#3ecfb2;--danger:#f76a6a;--text:#eeeef5;--muted:#8888aa;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 60px;}
+header{display:flex;align-items:center;gap:14px;padding:28px 0 20px;border-bottom:1px solid var(--border);margin-bottom:36px;}
+.logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;}
+header h1{font-size:24px;font-weight:800;}
+header h1 span{color:var(--accent);}
+.badge{margin-left:auto;background:rgba(124,106,247,.12);color:var(--accent);border:1px solid rgba(124,106,247,.3);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;text-transform:uppercase;}
+.status-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:10px;margin-bottom:24px;font-size:13px;}
+.dot{width:8px;height:8px;border-radius:50%;background:#555;flex-shrink:0;}
+.dot.green{background:var(--accent2);box-shadow:0 0 6px var(--accent2);}
+.dot.red{background:var(--danger);}
+.dot.yellow{background:#ffb43c;}
+.tabs{display:flex;gap:4px;margin-bottom:16px;}
+.tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid transparent;color:var(--muted);background:transparent;font-family:'Syne',sans-serif;}
+.tab.active{background:rgba(124,106,247,.15);color:var(--accent);border-color:rgba(124,106,247,.3);}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;display:none;}
+.panel.show{display:block;}
+.panel label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:8px;}
+.panel textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:12px 14px;outline:none;resize:vertical;line-height:1.6;}
+.panel textarea:focus{border-color:var(--accent);}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+.chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);cursor:pointer;color:var(--muted);background:var(--surface2);font-family:'Syne',sans-serif;}
+.chip.on{color:var(--accent2);border-color:rgba(62,207,178,.4);background:rgba(62,207,178,.08);}
+.gen-btn{width:100%;padding:14px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#9b7fff);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;border:none;cursor:pointer;}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+#results{margin-top:28px;}
+.rhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.rhead h2{font-size:16px;font-weight:700;}
+.cbtn{font-family:'Syne',sans-serif;font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 14px;cursor:pointer;}
+.stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:12px;color:var(--muted);}
+.stat span{font-size:20px;font-weight:800;display:block;}
+.s1 span{color:var(--accent);}.s2 span{color:var(--accent2);}.s3 span{color:var(--danger);}.s4 span{color:#ffb43c;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.tc{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;animation:fadeUp .3s ease both;}
+.tc-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.pill{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:20px;}
+.p-unit{background:rgba(124,106,247,.15);color:var(--accent);border:1px solid rgba(124,106,247,.3);}
+.p-integration{background:rgba(62,207,178,.1);color:var(--accent2);border:1px solid rgba(62,207,178,.3);}
+.p-edge{background:rgba(247,106,106,.1);color:var(--danger);border:1px solid rgba(247,106,106,.3);}
+.p-happy{background:rgba(255,180,60,.1);color:#ffb43c;border:1px solid rgba(255,180,60,.3);}
+.tc-title{font-size:14px;font-weight:600;flex:1;}
+.pri{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;}
+.pri-high{background:rgba(247,106,106,.15);color:var(--danger);}
+.pri-medium{background:rgba(255,180,60,.1);color:#ffb43c;}
+.pri-low{background:rgba(62,207,178,.1);color:var(--accent2);}
+.chev{color:var(--muted);font-size:16px;transition:transform .2s;}
+.tc.open .chev{transform:rotate(180deg);}
+.tc-body{display:none;padding:16px;}
+.tc.open .tc-body{display:block;}
+.tc-sec{margin-bottom:12px;}
+.tc-sec strong{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;}
+.tc-sec p,.tc-sec li{font-size:13px;color:#cccce0;line-height:1.7;font-family:'JetBrains Mono',monospace;}
+.tc-sec ul{padding-left:18px;}
+.code-out{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a8d8a8;white-space:pre-wrap;word-break:break-word;line-height:1.7;}
+.err{background:rgba(247,106,106,.08);border:1px solid rgba(247,106,106,.3);border-radius:10px;padding:14px 18px;color:var(--danger);font-size:13px;font-family:'JetBrains Mono',monospace;}
+.empty{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty .icon{font-size:42px;margin-bottom:12px;}
+.empty p{font-size:14px;line-height:1.7;max-width:320px;margin:0 auto;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="logo">⚡</div>
+<h1>Test<span>Craft</span> AI</h1>
+<div class="badge">Hackathon</div>
+</header>
+<div class="status-bar">
+<div class="dot yellow" id="dot"></div>
+<span id="stxt">Checking backend...</span>
+</div>
+<div class="tabs">
+<button class="tab active" data-tab="req">Requirements</button>
+<button class="tab" data-tab="api">API Spec</button>
+<button class="tab" data-tab="code">Generate Code</button>
+</div>
+<div class="panel show" id="tab-req">
+<label>Product Requirements / User Story</label>
+<textarea id="inp-req" rows="5" placeholder="e.g. Users can register with email and password. Password must be 8+ characters with one uppercase letter. On success redirect to dashboard..."></textarea>
+</div>
+<div class="panel" id="tab-api">
+<label>API Endpoint / Spec</label>
+<textarea id="inp-api" rows="5" placeholder="e.g. POST /api/register Body: {email, password} Returns 201 on success, 400 on error"></textarea>
+</div>
+<div class="panel" id="tab-code">
+<label>Describe what to test</label>
+<textarea id="inp-code" rows="4" placeholder="e.g. User login with email and password validation"></textarea>
+<div style="margin-top:12px;"><label>Language</label>
+<div class="chips">
+<div class="chip on" data-lang="python">Python (pytest)</div>
+<div class="chip" data-lang="javascript">JavaScript (Jest)</div>
+</div></div>
+</div>
+<div id="typeSection" class="chips">
+<div class="chip on" data-type="all">All Types</div>
+<div class="chip" data-type="unit">Unit Only</div>
+<div class="chip" data-type="integration">Integration Only</div>
+<div class="chip" data-type="edge">Edge Cases Only</div>
+</div>
+<button class="gen-btn" id="genBtn" onclick="generate()">⚡ Generate Test Cases</button>
+<div id="results">
+<div class="empty"><div class="icon">🧪</div><p>Paste your requirements above then hit Generate.</p></div>
+</div>
+</div>
+<script>
+const B="https://ai-test-generator-1-8xoq.onrender.com";
+let tab="req",lang="python",type="all";
+async function checkHealth(){
+try{
+const r=await fetch(B+"/health",{signal:AbortSignal.timeout(8000)});
+const d=await r.json();
+if(d.backend==="ok"&&d.groq==="configured"){
+document.getElementById("dot").className="dot green";
+document.getElementById("stxt").textContent="Backend connected · Groq AI ready";
+}else{
+document.getElementById("dot").className="dot yellow";
+document.getElementById("stxt").textContent="Backend up but GROQ_API_KEY missing";
+}
+}catch(e){
+document.getElementById("dot").className="dot red";
+document.getElementById("stxt").textContent="Backend offline - check Render";
+}}
+checkHealth();
+document.querySelectorAll(".tab").forEach(t=>{
+t.addEventListener("click",()=>{
+document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+document.querySelectorAll(".panel").forEach(x=>x.classList.remove("show"));
+t.classList.add("active");tab=t.dataset.tab;
+document.getElementById("tab-"+tab).classList.add("show");
+document.getElementById("typeSection").style.display=tab==="code"?"none":"flex";
+});
+});
+document.querySelectorAll("[data-type]").forEach(c=>{
+c.addEventListener("click",()=>{
+document.querySelectorAll("[data-type]").forEach(x=>x.classList.remove("on"));
+c.classList.add("on");type=c.dataset.type;
+});
+});
+document.querySelectorAll("[data-lang]").forEach(c=>{
+c.addEventListener("click",()=>{
+document.querySelectorAll("[data-lang]").forEach(x=>x.classList.remove("on"));
+c.classList.add("on");lang=c.dataset.lang;
+});
+});
+function tog(el){el.classList.toggle("open");}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function pClass(t){const m={unit:"p-unit",integration:"p-integration",edge_case:"p-edge",happy_path:"p-happy",negative:"p-edge",edge:"p-edge"};return m[t]||"p-unit";}
+function pLabel(t){const m={unit:"Unit",integration:"Integration",edge_case:"Edge Case",happy_path:"Happy Path",negative:"Negative",edge:"Edge"};return m[t]||t;}
+function priC(p){return"pri-"+(p||"medium");}
+function renderTests(tests){
+const c={};
+tests.forEach(t=>{const k=t.type||"unit";c[k]=(c[k]||0)+1;});
+const txt=tests.map(t=>"["+pLabel(t.type)+"] "+t.name+"\n"+t.description+"\nSteps: "+(t.steps||[]).join(" > ")+"\nExpected: "+t.expected).join("\n\n---\n\n");
+const cards=tests.map((tc,i)=>{
+const steps=(tc.steps||[]).map(s=>"<li>"+esc(s)+"</li>").join("");
+return'<div class="tc" id="tc'+i+'"><div class="tc-head" onclick="tog(document.getElementById(\'tc'+i+'\'))"><span class="pill '+pClass(tc.type)+'">'+pLabel(tc.type)+'</span><span class="tc-title">'+esc(tc.name||"Test Case")+'</span><span class="pri '+priC(tc.priority)+'">'+(tc.priority||"medium")+'</span><span class="chev">▾</span></div><div class="tc-body">'+(tc.description?'<div class="tc-sec"><strong>Description</strong><p>'+esc(tc.description)+'</p></div>':'')+(steps?'<div class="tc-sec"><strong>Steps</strong><ul>'+steps+'</ul></div>':'')+(tc.expected?'<div class="tc-sec"><strong>Expected</strong><p>'+esc(tc.expected)+'</p></div>':'')+'</div></div>';
+}).join("");
+document.getElementById("results").innerHTML='<div class="rhead"><h2>Generated '+tests.length+' Test Cases</h2><button class="cbtn" onclick="navigator.clipboard.writeText(decodeURIComponent(\''+encodeURIComponent(txt)+'\')).then(()=>{this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy All\',2000)})">Copy All</button></div><div class="stats"><div class="stat s1"><span>'+(c.unit||0)+'</span>Unit</div><div class="stat s2"><span>'+(c.integration||0)+'</span>Integration</div><div class="stat s3"><span>'+((c.edge_case||0)+(c.negative||0))+'</span>Edge</div><div class="stat s4"><span>'+(c.happy_path||0)+'</span>Happy</div></div>'+cards;
+}
+function renderCode(code){
+document.getElementById("results").innerHTML='<div class="rhead"><h2>Generated Test Code</h2><button class="cbtn" onclick="navigator.clipboard.writeText(decodeURIComponent(\''+encodeURIComponent(code)+'\')).then(()=>{this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)})">Copy</button></div><div class="code-out">'+esc(code)+'</div>';
+}
+async function generate(){
+const btn=document.getElementById("genBtn");
+btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Generating...';
+document.getElementById("results").innerHTML='<div class="empty"><p>Generating via Groq AI...</p></div>';
+try{
+let endpoint,body;
+if(tab==="req"){
+const txt=document.getElementById("inp-req").value.trim();
+if(!txt){alert("Enter requirements first.");return;}
+endpoint="/generate-tests";body={requirements:txt,test_type:type};
+}else if(tab==="api"){
+const txt=document.getElementById("inp-api").value.trim();
+if(!txt){alert("Enter API spec first.");return;}
+endpoint="/analyze-api";body={api_spec:txt};
+}else{
+const txt=document.getElementById("inp-code").value.trim();
+if(!txt){alert("Describe what to test.");return;}
+endpoint="/generate-code";body={requirements:txt,language:lang};
+}
+const res=await fetch(B+endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+if(!res.ok){const e=await res.json();throw new Error(e.detail||"Error "+res.status);}
+const data=await res.json();
+if(tab==="code"){renderCode(data.code||"No code generated");}
+else if(!data.tests||data.tests.length===0){document.getElementById("results").innerHTML='<div class="err">No tests parsed. Raw: '+esc(data.raw||"")+'</div>';}
+else{renderTests(data.tests);}
+}catch(e){
+document.getElementById("results").innerHTML='<div class="err">Error: '+esc(e.message)+'</div>';
+}finally{
+btn.disabled=false;btn.innerHTML="⚡ Generate Test Cases";
+}}
+</script>
+</body>
+</html>
